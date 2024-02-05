@@ -4,3 +4,6 @@
 [submodule "chat/src/main/resources/config"]
 	path = chat/src/main/resources/config
 	url = https://github.com/Goorm-Hongsam/config-ide-chat.git
+[submodule "eureka/src/main/resources/config"]
+	path = eureka/src/main/resources/config
+	url = https://github.com/Goorm-Hongsam/config-ide-eureka.git
