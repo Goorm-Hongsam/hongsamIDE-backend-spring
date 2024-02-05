@@ -1,0 +1,3 @@
+[submodule "api/src/main/resources/config"]
+	path = api/src/main/resources/config
+	url = https://github.com/Goorm-Hongsam/config-ide-api.git
