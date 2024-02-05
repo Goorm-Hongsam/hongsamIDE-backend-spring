@@ -7,3 +7,6 @@
 [submodule "eureka/src/main/resources/config"]
 	path = eureka/src/main/resources/config
 	url = https://github.com/Goorm-Hongsam/config-ide-eureka.git
+[submodule "gw/src/main/resources/config"]
+	path = gw/src/main/resources/config
+	url = https://github.com/Goorm-Hongsam/config-ide-gw.git
