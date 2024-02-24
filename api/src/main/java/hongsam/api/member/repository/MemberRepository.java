@@ -48,4 +48,12 @@ public class MemberRepository {
                 .getSingleResult();
     }
 
+    public int deleteMember(String email) {
+
+        return em.createQuery("delete from Member m where m.email = :email")
+                .setParameter("email",email)
+                .executeUpdate();
+
+    }
+
 }

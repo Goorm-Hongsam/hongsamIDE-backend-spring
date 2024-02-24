@@ -1,13 +1,14 @@
 package hongsam.api.member.controller;
 
-import hongsam.api.member.domain.MemberResponse;
-import hongsam.api.member.domain.MemberUpdateDto;
-import hongsam.api.member.domain.PasswordCheckDto;
-import hongsam.api.member.repository.MemberRepository;
+import hongsam.api.jwt.TokenProvider;
+import hongsam.api.member.domain.*;
 import hongsam.api.member.service.MemberService;
 import hongsam.api.member.service.S3Service;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,46 +21,64 @@ import java.io.IOException;
 public class MemberInfoController {
 
     private final S3Service s3Service;
-    private final MemberRepository memberRepository;
     private final MemberService memberService;
+    private final TokenProvider tokenProvider;
 
     // 프로필 사진 수정
     @PostMapping("/profile-img")
-    public MemberResponse updateProfileImg(@RequestParam("profileImg") MultipartFile multipartFile) throws IOException {
+    public ResponseEntity<MemberDto> updateProfileImg(HttpServletRequest request, @RequestParam("profileImg") MultipartFile multipartFile) throws IOException {
 
-//        Member member = memberRepository.findMemberByEmailOne(loginMember.getEmail());
+        MemberDto memberDto = tokenProvider.getMemberByAccessToken(request);
 
-//      s3에 파일 올리기
-//        String imgUrl = s3Service.uploadFiles(member.getUuid(), multipartFile, "profileImage");
+//        s3에 파일 올리기
+        String imgUrl = s3Service.uploadFiles(memberDto.getUuid(), multipartFile, "profileImage");
 
-//        loginMember.setProfileUrl(imgUrl);
+        memberDto.setProfileUrl(imgUrl);
 
-//        return new MemberResponse(200,imgUrl);
-        return null;
+        // 토큰 재발급하기
+        String accessToken = tokenProvider.updateAccessToken(memberDto);
+        HttpHeaders httpHeaders = new HttpHeaders();
+        // response header에 jwt token에 넣어줌
+        httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+        return ResponseEntity.ok().headers(httpHeaders).body(memberDto);
     }
 
     // 회원 정보 수정
     @PutMapping("/info")
-    public MemberResponse updateMemberInfo(@RequestBody MemberUpdateDto memberUpdateDto) {
+    public ResponseEntity<MemberResponse> updateMemberInfo(HttpServletRequest request, @RequestBody MemberUpdateDto memberUpdateDto) {
 
-//        return memberService.updateMemberInfo(loginMember, memberUpdateDto.getUsername(),memberUpdateDto.getPassword());
-        return null;
+        MemberDto memberDto = tokenProvider.getMemberByAccessToken(request);
+
+        MemberResponse memberResponse = memberService.updateMemberInfo(memberDto, memberUpdateDto.getUsername(), memberUpdateDto.getPassword());
+
+        if (memberResponse.getStatus() == 200) { // 토큰 재발급
+            String accessToken = tokenProvider.updateAccessToken((MemberDto) memberResponse.getData());
+            HttpHeaders httpHeaders = new HttpHeaders();
+            // response header에 jwt token에 넣어줌
+            httpHeaders.add("Authorization", "Bearer " + accessToken);
+
+            return ResponseEntity.ok().headers(httpHeaders).body(memberResponse);
+        } else {
+            return ResponseEntity.ok().body(memberResponse);
+        }
     }
 
     // 비밀번호 확인
     @PostMapping("/pw-check")
-    public MemberResponse checkPassword(@RequestBody PasswordCheckDto passwordCheckDto) {
+    public MemberResponse checkPassword(HttpServletRequest request, @RequestBody PasswordCheckDto passwordCheckDto) {
 
-//        return memberService.checkPassword(passwordCheckDto.getPassword(), loginMember.getEmail());
-        return null;
+        MemberDto memberDto = tokenProvider.getMemberByAccessToken(request);
+        return memberService.checkPassword(passwordCheckDto.getPassword(), memberDto.getEmail());
     }
 
     // 회원 탙퇴
     @DeleteMapping("/members")
-    public MemberResponse deleteMember() {
+    public MemberResponse deleteMember(HttpServletRequest request) {
 
-//        return memberService.deleteMember(loginMember.getEmail());
-        return null;
+        MemberDto memberDto = tokenProvider.getMemberByAccessToken(request);
+
+        return memberService.deleteMember(memberDto.getEmail());
     }
 
     // 사진 파일 삭제용 테스트

@@ -37,6 +37,10 @@ public class CustomUserDetails implements UserDetails {
         return member.getUsername();
     }
 
+    public String getProfileUrl() {
+        return member.getProfileUrl();
+    }
+
     public String getUuid() {
         return member.getUuid();
     }
@@ -60,4 +64,5 @@ public class CustomUserDetails implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
 }

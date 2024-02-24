@@ -4,23 +4,21 @@ import hongsam.api.jwt.TokenProvider;
 import hongsam.api.member.domain.*;
 import hongsam.api.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -47,12 +45,18 @@ public class MemberController {
 
     // 로그인
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<MemberDto> login(@RequestBody LoginDto loginDto) {
 
         UsernamePasswordAuthenticationToken authenticationToken =
                 new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword());
 
         Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+
+        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+
+        String authorities = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining(","));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -62,28 +66,31 @@ public class MemberController {
         // response header에 jwt token에 넣어줌
         httpHeaders.add("Authorization", "Bearer " + accessToken);
 
-        return ResponseEntity.ok().headers(httpHeaders).body(accessToken);
+        return ResponseEntity.ok().headers(httpHeaders)
+                .body(new MemberDto(userDetails.getUsername(), userDetails.getUsername(), userDetails.getUuid(), userDetails.getProfileUrl(), authorities));
     }
 
-    @PostMapping("/test")
-    public String test() {
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        return authentication.getName();
+    @PostMapping("/login-check")
+    public MemberDto loginCheck(HttpServletRequest request) {
+        return tokenProvider.getMemberByAccessToken(request);
     }
 
-    // 로그아웃
-//    @PostMapping("/logout")
-//    public MemberResponse logout(HttpServletRequest request) {
-//        HttpSession session = request.getSession(false);
+//    @PostMapping("/test")
+//    public UserDetails test() {
 //
-//        if (session == null || session.getAttribute("loginMember") == null) {
-//            log.info("로그아웃 실패");
-//            return new MemberResponse(400,"로그아웃 실패");
-//        }
-//        session.invalidate();
-//        log.info("로그아웃 성공");
-//        return new MemberResponse(200,"로그아웃 성공");
+//        // 현재 프로젝트에 인증/인가 모두 구현했을 경우
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//
+//        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+//
+//        return userDetails;
 //    }
+
+    // jwt에서 정보 꺼내기 테스트
+    @PostMapping("/test2")
+    public MemberDto test(HttpServletRequest request) {
+
+        return tokenProvider.getMemberByAccessToken(request);
+    }
+
 }

@@ -1,6 +1,7 @@
 package hongsam.api.member.service;
 
 import hongsam.api.member.domain.Member;
+import hongsam.api.member.domain.MemberDto;
 import hongsam.api.member.domain.MemberResponse;
 import hongsam.api.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -61,56 +62,55 @@ public class MemberService {
 
     }
 
-//    @Transactional
-//    public MemberResponse updateMemberInfo(LoginMemberResponse loginMember, String username, String password) {
-//
-//        Member member = memberRepository.findMemberByEmailOne(loginMember.getEmail());
-//
-//        if (username != null && username.trim().isEmpty()) {
-//            // null X, 빈 문자열 왔을 때
-//            return new MemberResponse(401, "username이 빈 문자열 입니다.");
-//        } else if (username != null) {
-//            if (member.getUsername().equals(username)) {
-//                return new MemberResponse(403, "기존의 이름과 동일합니다.");
-//            }
-//            // db update
-//            member.setUsername(username);
-//            // 세션 정보 변경
-//            loginMember.setUsername(username);
-//        }
-//
-//        if (password != null && password.trim().isEmpty()) {
-//            return new MemberResponse(401, "password가 빈 문자열 입니다.");
-//        } else if (password != null) {
-//            if (member.getPassword().equals(password)) {
-//                return new MemberResponse(402, "기존의 비밀번호와 동일합니다.");
-//            }
-//            member.setPassword(password);
-//        }
-//
-//        return new MemberResponse(200, loginMember);
-//    }
-//
-//    public MemberResponse checkPassword(String password, String email) {
-//
-//        Member member = memberRepository.findMemberByEmailOne(email);
-//
-//        if (member.getPassword().equals(password)) {
-//            return new MemberResponse(200, "비밀번호 일치 확인");
-//        } else {
-//            return new MemberResponse(400, "비밀번호가 일치하지 않습니다.");
-//        }
-//    }
-//
-//    public MemberResponse deleteMember(String email) {
-//
-//        int deleteResult = memberRepository.deleteMember(email);
-//
-//        if (deleteResult == 1) {
-//            return new MemberResponse(200, "회원 탈퇴 성공");
-//        } else {
-//            return new MemberResponse(402, "회원 탈퇴 실패");
-//        }
-//    }
+    @Transactional
+    public MemberResponse updateMemberInfo(MemberDto memberDto, String username, String password) {
+
+        Member member = memberRepository.findMemberByEmailOne(memberDto.getEmail());
+
+        if (username != null && username.trim().isEmpty()) {
+            // null X, 빈 문자열 왔을 때
+            return new MemberResponse(401, "username이 빈 문자열 입니다.");
+        } else if (username != null) {
+            if (member.getUsername().equals(username)) {
+                return new MemberResponse(403, "기존의 이름과 동일합니다.");
+            }
+            // db update
+            member.setUsername(username);
+            memberDto.setUsername(username);
+        }
+
+        if (password != null && password.trim().isEmpty()) {
+            return new MemberResponse(401, "password가 빈 문자열 입니다.");
+        } else if (password != null) {
+            if (bCryptPasswordEncoder.matches(password, member.getPassword())) {
+                return new MemberResponse(402, "기존의 비밀번호와 동일합니다.");
+            }
+            member.setPassword(bCryptPasswordEncoder.encode(password));
+        }
+
+        return new MemberResponse(200, memberDto);
+    }
+
+    public MemberResponse checkPassword(String password, String email) {
+
+        Member member = memberRepository.findMemberByEmailOne(email);
+
+        if (bCryptPasswordEncoder.matches(password, member.getPassword())) {
+            return new MemberResponse(200, "비밀번호 일치 확인");
+        } else {
+            return new MemberResponse(400, "비밀번호가 일치하지 않습니다.");
+        }
+    }
+
+    public MemberResponse deleteMember(String email) {
+
+        int deleteResult = memberRepository.deleteMember(email);
+
+        if (deleteResult == 1) {
+            return new MemberResponse(200, "회원 탈퇴 성공");
+        } else {
+            return new MemberResponse(402, "회원 탈퇴 실패");
+        }
+    }
 
 }
