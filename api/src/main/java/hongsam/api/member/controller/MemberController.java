@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -32,14 +33,14 @@ public class MemberController {
 
     // 회원가입
     @PostMapping("/signup")
-    public MemberResponse signup(@RequestBody Member member) {
+    public ResponseEntity<String> signup(@RequestBody Member member) {
         return memberService.signup(member);
     }
 
     // 이메일 중복 체크
     // 문제점 : emailCheck 한 후 통과 후 다른 사용자가 동일 이메일 입력한 경우 (나중에 생각)
     @PostMapping("/signup/email-check")
-    public MemberResponse emailCheck(@RequestBody EmailCheckDto emailCheckDto) {
+    public ResponseEntity<String> emailCheck(@RequestBody EmailCheckDto emailCheckDto) {
         return memberService.emailCheck(emailCheckDto.getEmail());
     }
 
@@ -67,12 +68,17 @@ public class MemberController {
         httpHeaders.add("Authorization", "Bearer " + accessToken);
 
         return ResponseEntity.ok().headers(httpHeaders)
-                .body(new MemberDto(userDetails.getUsername(), userDetails.getUsername(), userDetails.getUuid(), userDetails.getProfileUrl(), authorities));
+                .body(new MemberDto(userDetails.getUsername(), userDetails.getUserNickname(), userDetails.getUuid(), userDetails.getProfileUrl(), authorities));
     }
 
     @PostMapping("/login-check")
     public MemberDto loginCheck(HttpServletRequest request) {
         return tokenProvider.getMemberByAccessToken(request);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout() {
+        return new ResponseEntity<>("토큰 정보를 지워주세요.", HttpStatus.NOT_ACCEPTABLE);
     }
 
 //    @PostMapping("/test")
