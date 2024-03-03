@@ -74,7 +74,7 @@ public class TokenProvider implements InitializingBean {
                 .claim("username", memberDto.getUsername())
                 .claim("userUUID", memberDto.getUuid())
                 .claim("profileUrl", memberDto.getProfileUrl())
-                .signWith(key, SignatureAlgorithm.HS512)
+                .signWith(key, SignatureAlgorithm.HS256)
                 .setExpiration(validity)
                 .compact();
 
