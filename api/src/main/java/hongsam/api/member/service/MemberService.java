@@ -6,6 +6,9 @@ import hongsam.api.member.domain.MemberResponse;
 import hongsam.api.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,8 +26,13 @@ public class MemberService {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
     // 회원가입
-    public MemberResponse signup(Member member) {
+    public ResponseEntity<String> signup(Member member) {
 
+        List<Member> dbMember = memberRepository.findMemberByEmail(member.getEmail());
+
+        if (!dbMember.isEmpty()) {
+            return new ResponseEntity<>("이미 사용중인 이메일 입니다.", HttpStatus.BAD_REQUEST);
+        }
         // uuid 생성
         member.setUuid(UUID.randomUUID().toString());
         member.setProfileUrl("https://hongsam-ide.s3.ap-northeast-2.amazonaws.com/profileImage/good.png");
@@ -36,20 +44,20 @@ public class MemberService {
         memberRepository.save(member);
 
         if (member.getId() == null) {
-            return new MemberResponse(400, "회원가입 실패");
+            return new ResponseEntity<>("회원가입 실패", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new MemberResponse(200, "회원가입 성공");
+        return new ResponseEntity<>("회원가입 성공", HttpStatus.OK);
     }
 
     // 회원가입 이메일 확인
-    public MemberResponse emailCheck(String email) {
+    public ResponseEntity<String> emailCheck(String email) {
 
         List<Member> member = memberRepository.findMemberByEmail(email);
 
         if (member.isEmpty()) {
-            return new MemberResponse(200, "사용 가능한 이메일 입니다.");
+            return new ResponseEntity<>("사용 가능한 이메일입니다.", HttpStatus.OK);
         } else {
-            return new MemberResponse(400, "이미 사용중인 이메일 입니다.");
+            return new ResponseEntity<>("이미 사용중인 이메일 입니다.", HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -63,16 +71,18 @@ public class MemberService {
     }
 
     @Transactional
-    public MemberResponse updateMemberInfo(MemberDto memberDto, String username, String password) {
+    public ResponseEntity<Object> updateMemberInfo(MemberDto memberDto, String username, String password) {
 
         Member member = memberRepository.findMemberByEmailOne(memberDto.getEmail());
 
         if (username != null && username.trim().isEmpty()) {
             // null X, 빈 문자열 왔을 때
-            return new MemberResponse(401, "username이 빈 문자열 입니다.");
+            return new ResponseEntity<>("username이 빈 문자열 입니다.", HttpStatusCode.valueOf(401));
+//            return new MemberResponse(401, "username이 빈 문자열 입니다.");
         } else if (username != null) {
             if (member.getUsername().equals(username)) {
-                return new MemberResponse(403, "기존의 이름과 동일합니다.");
+                return new ResponseEntity<>("기존의 이름과 동일합니다.", HttpStatusCode.valueOf(403));
+//                return new MemberResponse(403, "기존의 이름과 동일합니다.");
             }
             // db update
             member.setUsername(username);
@@ -80,36 +90,39 @@ public class MemberService {
         }
 
         if (password != null && password.trim().isEmpty()) {
-            return new MemberResponse(401, "password가 빈 문자열 입니다.");
+            return new ResponseEntity<>("password가 빈 문자열 입니다.", HttpStatusCode.valueOf(401));
+//            return new MemberResponse(401, "password가 빈 문자열 입니다.");
         } else if (password != null) {
             if (bCryptPasswordEncoder.matches(password, member.getPassword())) {
-                return new MemberResponse(402, "기존의 비밀번호와 동일합니다.");
+                return new ResponseEntity<>("기존의 비밀번호와 동일합니다.", HttpStatusCode.valueOf(402));
+//                return new MemberResponse(402, "기존의 비밀번호와 동일합니다.");
             }
             member.setPassword(bCryptPasswordEncoder.encode(password));
         }
 
-        return new MemberResponse(200, memberDto);
+        return new ResponseEntity<>(memberDto, HttpStatus.OK);
+//        return new MemberResponse(200, memberDto);
     }
 
-    public MemberResponse checkPassword(String password, String email) {
+    public ResponseEntity<String> checkPassword(String password, String email) {
 
         Member member = memberRepository.findMemberByEmailOne(email);
 
         if (bCryptPasswordEncoder.matches(password, member.getPassword())) {
-            return new MemberResponse(200, "비밀번호 일치 확인");
+            return new ResponseEntity<>("비밀번호 일치", HttpStatus.OK);
         } else {
-            return new MemberResponse(400, "비밀번호가 일치하지 않습니다.");
+            return new ResponseEntity<>("비밀번호가 일치하지 않습니다.", HttpStatus.BAD_REQUEST);
         }
     }
 
-    public MemberResponse deleteMember(String email) {
+    public ResponseEntity<String> deleteMember(String email) {
 
         int deleteResult = memberRepository.deleteMember(email);
 
         if (deleteResult == 1) {
-            return new MemberResponse(200, "회원 탈퇴 성공");
+            return new ResponseEntity<>("회원 탈퇴 성공", HttpStatus.OK);
         } else {
-            return new MemberResponse(402, "회원 탈퇴 실패");
+            return new ResponseEntity<>("회원 탈퇴 실패", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

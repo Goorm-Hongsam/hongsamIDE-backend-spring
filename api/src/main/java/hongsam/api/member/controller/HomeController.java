@@ -6,24 +6,28 @@ import hongsam.api.member.domain.MemberResponse;
 import hongsam.api.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class HomeController {
 
     private final MemberService memberService;
     private final TokenProvider tokenProvider;
 
-    @GetMapping("/api/question/{questionId}")
+    @GetMapping("/question/{questionId}")
     public MemberResponse getUUID(HttpServletRequest request, @PathVariable("questionId") String questionId) {
 
         MemberDto memberDto = tokenProvider.getMemberByAccessToken(request);
 
         return memberService.getUUID(memberDto.getEmail());
 
+    }
+
+    @PostMapping("/login-check")
+    public MemberDto loginCheck(HttpServletRequest request) {
+        return tokenProvider.getMemberByAccessToken(request);
     }
 
 }
