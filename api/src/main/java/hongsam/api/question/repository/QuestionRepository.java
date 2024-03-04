@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Repository
@@ -69,7 +70,9 @@ public class QuestionRepository {
             query.setParameter("id", id);
         }
         query.setMaxResults(size);
-        return query.getResultList();
+        List<QuestionBasic> resultList = query.getResultList();
+        resultList.sort(Comparator.comparingLong(QuestionBasic::getId));
+        return resultList;
     }
 
 }
