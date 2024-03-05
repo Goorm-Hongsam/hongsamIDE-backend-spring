@@ -11,7 +11,7 @@ env:
   ECR_REPOSITORY: back-api
 
 jobs:
-  build:
+  build-deploy:
 
     runs-on: ubuntu-latest
 
@@ -36,47 +36,49 @@ jobs:
         build-root-directory: api
         arguments: build
     
-    - name: Upload build artifact
-      uses: actions/upload-artifact@v2
-      with:
-        name: hongsamIDE-back-api
-        path: api/build/libs/api-0.0.1-SNAPSHOT.jar
+    # - name: Upload build artifact
+    #   uses: actions/upload-artifact@v2
+    #   with:
+    #     name: hongsamIDE-back-api
+    #     path: api/build/libs/api-0.0.1-SNAPSHOT.jar
         
-  deploy:
-    name: Deploy
-    needs: build
-    runs-on: ubuntu-latest
-    environment: production
+  # deploy:
+  #   name: Deploy
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   environment: production
 
-    steps:
-    - name: Download build artifact
-      uses: actions/download-artifact@v2
-      with:
-        name: hongsamIDE-back-api
-        path: api/build/libs/
+  #   steps:
+  #   - name: Download build artifact
+  #     uses: actions/download-artifact@v2
+  #     with:
+  #       name: hongsamIDE-back-api
+  #       path: api/build/libs/
         
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}         
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+  #   - name: Configure AWS credentials
+  #     uses: aws-actions/configure-aws-credentials@v1
+  #     with:
+  #       aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}         
+  #       aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  #       aws-region: ${{ env.AWS_REGION }}
 
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+  #   - name: Login to Amazon ECR
+  #     id: login-ecr
+  #     uses: aws-actions/amazon-ecr-login@v1
         
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
-      env:
-        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-        IMAGE_TAG: ${{ github.sha }}
+      # env:
+      #   ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      #   IMAGE_TAG: ${{ github.sha }}
       run: |
         echo "테스트"
         pwd
         ls
         cd api
         ls
-        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f api/Dockerfile api
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        cd build/libs
+        ls
+        # docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f api/Dockerfile api
+        # docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        # echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
