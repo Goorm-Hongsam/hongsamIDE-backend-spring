@@ -44,7 +44,7 @@ public class MemberController {
         return memberService.emailCheck(emailCheckDto.getEmail());
     }
 
-    // 로그인!!
+    // 로그인
     @PostMapping("/login")
     public ResponseEntity<MemberDto> login(@RequestBody LoginDto loginDto) {
 
