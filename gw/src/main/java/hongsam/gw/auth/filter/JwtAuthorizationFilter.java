@@ -38,7 +38,7 @@ public class JwtAuthorizationFilter extends AbstractGatewayFilterFactory<JwtAuth
             ServerHttpRequest request = exchange.getRequest();
             ServerHttpResponse response = exchange.getResponse();
             if (!containsAuthorization(request)) {
-                return onError(response, config.getMissingMessage(), HttpStatus.UNAUTHORIZED);
+                return onError(response, config.getMissingMessage(), HttpStatus.FORBIDDEN);
             }
 
             String token = jwtUtils.extractToken(request);
