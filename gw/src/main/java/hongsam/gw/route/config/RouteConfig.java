@@ -30,6 +30,8 @@ public class RouteConfig {
                         .uri(apiURI))
                 .route(r -> r.path("/api/question/**")
                         .uri(apiURI))
+                .route(r -> r.path("/api/login-check/**")
+                        .uri(apiURI))
                 .route("api", r -> r.path("/api/**")
                         .filters(f -> f
                                 .filter(jwtFilter.apply(JwtAuthorizationFilter.Config.builder()
