@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
+import java.util.Comparator;
 import java.util.List;
 
 @Repository
@@ -29,11 +30,11 @@ public class QuestionRepository {
         return resultList;
     }
 
-    public List<QuestionBasic> findQuestion(String buttonType, int level, int id, int size) {
+    public List<QuestionBasic> findQuestion(String buttonType, int level, int id, int size, String title) {
         String jpql = "select q from QuestionBasic q ";
 
         // 조건문 하나라도 들어가면 where 추가
-        if (level != -1 || id != 1) {
+        if (level != -1 || id != 1 || title != null) {
             jpql += "where ";
         }
 
@@ -54,6 +55,14 @@ public class QuestionRepository {
             }
         }
 
+        if (title != null) {
+            if (level != -1 || id != -1) {
+                jpql += "and ";
+            }
+            jpql += "q.title like concat('%', :title, '%') ";
+        }
+
+
         // 문제 정렬
         if (buttonType.equals("next")) {
             jpql += "order by q.id asc";
@@ -68,8 +77,13 @@ public class QuestionRepository {
         if (id != 1) {
             query.setParameter("id", id);
         }
+        if (title != null) {
+            query.setParameter("title", title);
+        }
         query.setMaxResults(size);
-        return query.getResultList();
+        List<QuestionBasic> resultList = query.getResultList();
+        resultList.sort(Comparator.comparingLong(QuestionBasic::getId));
+        return resultList;
     }
 
 }

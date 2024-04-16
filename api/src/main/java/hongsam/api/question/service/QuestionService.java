@@ -25,8 +25,8 @@ public class QuestionService {
         return questionRepository.findAll();
     }
 
-    public List<QuestionBasic> getPage(String buttonType, int level, int index, int size) {
-        return questionRepository.findQuestion(buttonType, level, index, size);
+    public List<QuestionBasic> getPage(String buttonType, int level, int index, int size, String filter) {
+        return questionRepository.findQuestion(buttonType, level, index, size, filter);
     }
 
 }
